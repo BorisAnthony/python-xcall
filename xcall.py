@@ -24,7 +24,7 @@ and the chance of replies being mixed up.
 """
 
 import json
-import urllib
+import urllib.parse
 import logging
 import os
 import subprocess
@@ -130,7 +130,7 @@ class XCallClient(object):
         cmdurl = self._build_url(action, action_parameters)
         logger.debug('--> ' + cmdurl)
         result = self._xcall(cmdurl, activate_app)
-        logger.debug('<-- ' + unicode(result) + '\n')
+        logger.debug('<-- ' + repr(result) + '\n')
 
         return result
 
@@ -141,9 +141,9 @@ class XCallClient(object):
 
         if action_parameter_dict:
             par_list = []
-            for k, v in action_parameter_dict.iteritems():
+            for k, v in action_parameter_dict.items():
                 par_list.append(
-                    k + '=' + urllib.quote(unicode(v).encode('utf8')))
+                    k + '=' + urllib.parse.quote(v))
             url = url + '?' + '&'.join(par_list)
         return url
 
@@ -158,6 +158,8 @@ class XCallClient(object):
         p = subprocess.Popen(
             args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         stdout, stderr = p.communicate()
+        stdout = stdout.decode('utf-8')
+        stderr = stderr.decode('utf-8')
 
         # Assert that reply had output on one, and only one of stdout and stderr
         if (stdout != '') and (stderr != ''):
@@ -171,7 +173,7 @@ class XCallClient(object):
                 'Try xcall directly from terminal with: "%s"' % ' '.join(args))
 
         if stdout:
-            response = urllib.unquote(stdout).decode('utf8')
+            response = urllib.parse.unquote(stdout)
             if self.json_decode_success:
                 return json.loads(response)
             else:
